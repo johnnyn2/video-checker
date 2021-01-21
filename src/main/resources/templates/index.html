@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document</title>
+<script type="text/javascript" src="https://unpkg.com/mediainfo.js/dist/mediainfo.min.js"></script>
+<style>
+pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+.string { color: green; }
+.number { color: darkorange; }
+.boolean { color: blue; }
+.null { color: magenta; }
+.key { color: red; }
+</style>
+<script type="text/javascript">
+function outputJson(container, inp) {
+    const pre = document.createElement('pre');
+    pre.innerHTML = inp;
+    document.getElementById(container).append(pre);
+}
+
+function syntaxHighlight(json) {
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        var cls = 'number';
+        if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+                cls = 'key';
+            } else {
+                cls = 'string';
+            }
+        } else if (/true|false/.test(match)) {
+            cls = 'boolean';
+        } else if (/null/.test(match)) {
+            cls = 'null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+    });
+}
+document.addEventListener('DOMContentLoaded', function () {
+    const fileinput = document.getElementById('fileinput');
+    const output = document.getElementById('output');
+
+    const onChangeFile = (mediainfo) => {
+        const file = fileinput.files[0];
+        if (file) {
+            output.value = 'Working…';
+
+            const getSize = () => file.size;
+
+            const readChunk = (chunkSize, offset) =>
+                new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        if (event.target.error) {
+                            reject(event.target.error);
+                        }
+                        resolve(new Uint8Array(event.target.result));
+                    }
+                    reader.readAsArrayBuffer(file.slice(offset, offset + chunkSize));
+                })
+
+            mediainfo
+                .analyzeData(getSize, readChunk)
+                .then((result) => {
+                    console.log('mediainfo: ', result);
+                    output.value = result;
+                })
+                .catch((error) => {
+                    output.value = `An error occured:\n${error.stack}`;
+                });
+        }
+    }
+
+    MediaInfo({ format: 'object' }, (mediainfo) => {
+        fileinput.addEventListener('change', () => onChangeFile(mediainfo))
+    });
+
+    const uploadJAVE = document.getElementById("uploadJAVE");
+    uploadJAVE.onclick = e => {
+        let video = fileinput.files[0];
+        let formData = new FormData();
+        formData.append('uploadVideo', video);
+        fetch('/uploadJAVE', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            const jsonStr = JSON.stringify(data, undefined, 4);
+            outputJson('jave', syntaxHighlight(jsonStr));
+        });
+    }
+    const uploadJCodec = document.getElementById("uploadJCodec");
+    uploadJCodec.onclick = e => {
+        let video = fileinput.files[0];
+        let formData = new FormData();
+        formData.append('uploadVideo', video);
+        fetch('/uploadJCodec', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            const jsonStr = JSON.stringify(data, undefined, 4);
+            outputJson('jcodec', syntaxHighlight(jsonStr));
+        });
+    }
+})
+</script>
+</head>
+
+<body>
+    <div id="wrapper">
+        <input type="file" id="fileinput" name="fileinput" />
+        <textarea id="output"></textarea>
+    </div>
+    <div>
+        <button id="uploadJAVE">Submit to JAVE for validation</button>
+        <div id="jave"></div>
+        <button id="uploadJCodec">Submit to JCodec for validation</button>
+        <div id="jcodec"></div>
+    </div>
+</body>
+
+</html>
