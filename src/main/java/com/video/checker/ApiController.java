@@ -27,7 +27,7 @@ public class ApiController {
     @PostMapping(value = "/uploadJAVE", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Map<String, Object> upload(@RequestParam(required = true, value="uploadVideo") MultipartFile uploadVideo) {
         Map<String, Object> data = new HashMap<>();
-        File source = new File("C:/Users/johnnyho/Documents/checker/uploadVideos.mp4");
+        File source = new File("C:/Users/johnnyho/Documents/video-checker/uploadVideos.mp4");
         try {
 			uploadVideo.transferTo(source);
 		} catch (IllegalStateException e1) {
@@ -69,7 +69,7 @@ public class ApiController {
     @PostMapping(value = "/uploadJCodec", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Map<String, Object> uploadJCodec(@RequestParam(required = true, value="uploadVideo") MultipartFile uploadVideo) {
         Map<String, Object> data = new HashMap<>();
-        File source = new File("C:/Users/johnnyho/Documents/checker/uploadVideos.mp4");
+        File source = new File("C:/Users/johnnyho/Documents/video-checker/uploadVideos.mp4");
         try {
 			uploadVideo.transferTo(source);
 		} catch (IllegalStateException e1) {
